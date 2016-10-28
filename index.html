@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/lodash/4.16.4/lodash.min.js"></script>
+
+    <style>
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: rows;
+  margin: 0px;
+}
+
+.center {
+  display: flex;
+  flex: 1;
+}
+
+      #mapid {
+        flex: 1;
+      }
+
+      .layerbar {
+        flex: 0 0 25%;
+        order: -1;
+      }
+
+      .layerbar--predefined, .layerbar--user {
+        padding-left: 10px;
+      }
+
+      .layercard {
+        margin: 5px;
+        background-color: #f6f6f6;
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        padding: 10px;
+
+        display: flex;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12)
+      }
+
+      .layercard--swatch {
+        border-radius: 6px;
+        border: 1px solid #efefef;
+
+        width: 1em;
+        height: 1em;
+        margin-right: 0.3em;
+      }
+
+      .layercard--text {
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="mapid"></div>
+    <div class="layerbar">
+      <div class="layerbar--predefined">
+        <h3>SECOORA layers</h3>
+      </div>
+      <div class="layerbar--user">
+        <h3>User Layers</h3>
+        <div class="layerbar--user--layers">
+
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+
+      // default layers
+      var defaultLayers = [
+        {name: 'bathygeon', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/bathy/bathy.geojson", visible: true},
+        {name: 'hfradar', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/hfradar/hfradar.geojson", visible: true},
+        {name: 'gliders_from_georefd', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
+        {name: 'georef_glider_triangles', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
+        {name: 'gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
+        {name: 'stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/stations.geojson", visible: true}
+      ]
+
+      // leaflet
+      var map = L.map('mapid').setView([30.676, -80.134], 6);
+      var layer = new L.StamenTileLayer("terrain-background");
+      map.addLayer(layer);
+
+      // add default layers
+      var q = d3.queue();
+      defaultLayers.forEach(function(e) {
+        q.defer(d3.json, e.url);
+      });
+
+      q.awaitAll(function(error, data) {
+        //console.log(data);
+
+        var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // zip back up with original data
+        var newData = _.map(defaultLayers, function(d, i) {
+          return _.assign(_.clone(d), {
+            color: colorScale(i),
+            layer: L.geoJson(data[i], {
+              pointToLayer: function(feature, latlng) {
+                return L.circleMarker(latlng, {
+                  radius: 8,
+                  fillColor: colorScale(i),
+                  color: colorScale(i),
+                  weight: 1,
+                  opacity: 1,
+                  fillOpacity: 0.8
+                });
+              },
+              style: {
+                color: colorScale(i)
+              }              
+          })});
+        });
+
+        console.log(newData);
+
+        newData.forEach(function(e) {
+          e.layer.addTo(map);
+        });
+
+        // add to left hand controls
+        var cards = d3.select('.layerbar--predefined')
+          .selectAll('.layercard')
+          .data(newData)
+          .enter()
+          .append('div')
+          .attr('class', 'layercard');
+
+        cards.append('div')
+          .attr('class', 'layercard--text')
+          .text(function(d) { return d.name });
+
+        cards.append('div')
+          .attr('class', 'layercard--swatch')
+          .style('background-color', function(d) { return d.color });
+      });
+
+    </script>
+  </body>
+</html>
