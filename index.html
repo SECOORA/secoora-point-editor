@@ -29,7 +29,7 @@ body {
         order: -1;
       }
 
-      .layerbar--predefined, .layerbar--user {
+      .layerbar__predefined, .layerbar__user {
         padding-left: 10px;
       }
 
@@ -44,16 +44,25 @@ body {
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12)
       }
 
-      .layercard--swatch {
+      .layercard:hover {
+        cursor: pointer;
+      }
+
+      .layercard--disabled {
+        color: #ccc;
+        background-color: white;
+      }
+
+      .layercard__swatch {
         border-radius: 6px;
-        border: 1px solid #efefef;
+        border: 1px solid #555;
 
         width: 1em;
         height: 1em;
         margin-right: 0.3em;
       }
 
-      .layercard--text {
+      .layercard__text {
         flex: 1;
       }
     </style>
@@ -62,12 +71,12 @@ body {
   <body>
     <div id="mapid"></div>
     <div class="layerbar">
-      <div class="layerbar--predefined">
+      <div class="layerbar__predefined">
         <h3>SECOORA layers</h3>
       </div>
-      <div class="layerbar--user">
+      <div class="layerbar__user">
         <h3>User Layers</h3>
-        <div class="layerbar--user--layers">
+        <div class="layerbar__user__layers">
 
         </div>
       </div>
@@ -107,16 +116,17 @@ body {
             layer: L.geoJson(data[i], {
               pointToLayer: function(feature, latlng) {
                 return L.circleMarker(latlng, {
-                  radius: 8,
+                  radius: 5,
                   fillColor: colorScale(i),
                   color: colorScale(i),
                   weight: 1,
                   opacity: 1,
-                  fillOpacity: 0.8
+                  fillOpacity: 1
                 });
               },
               style: {
-                color: colorScale(i)
+                color: colorScale(i),
+                weight: 2
               }              
           })});
         });
@@ -128,19 +138,30 @@ body {
         });
 
         // add to left hand controls
-        var cards = d3.select('.layerbar--predefined')
+        var cards = d3.select('.layerbar__predefined')
           .selectAll('.layercard')
           .data(newData)
           .enter()
           .append('div')
-          .attr('class', 'layercard');
+          .attr('class', 'layercard')
+          .on('click', function(d) {
+            d3.select(this).classed('layercard--disabled', d.visible);
+
+            if (d.visible) {
+              map.removeLayer(d.layer);
+              d.visible = false;
+            } else {
+              map.addLayer(d.layer);
+              d.visible = true;
+            }
+          });
 
         cards.append('div')
-          .attr('class', 'layercard--text')
+          .attr('class', 'layercard__text')
           .text(function(d) { return d.name });
 
         cards.append('div')
-          .attr('class', 'layercard--swatch')
+          .attr('class', 'layercard__swatch')
           .style('background-color', function(d) { return d.color });
       });
 
