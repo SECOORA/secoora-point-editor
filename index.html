@@ -6,12 +6,15 @@
     <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/lodash/4.16.4/lodash.min.js"></script>
+    <script src="ext/localforage.min.js"></script>
+    <script src="ext/metatable.js"></script>
 
     <style>
 body {
+  font-family: sans-serif;
   display: flex;
   min-height: 100vh;
-  flex-direction: rows;
+  flex-direction: row;
   margin: 0px;
 }
 
@@ -20,8 +23,18 @@ body {
   flex: 1;
 }
 
+      .central {
+          display: flex;
+          flex-direction: column;
+        flex: 1;
+      }
+
       #mapid {
         flex: 1;
+      }
+
+      .editor {
+        flex: 0 0 25%;
       }
 
       .layerbar {
@@ -65,11 +78,18 @@ body {
       .layercard__text {
         flex: 1;
       }
+
+      .editor textarea {
+        height: 1em;
+      }
     </style>
   </head>
 
   <body>
-    <div id="mapid"></div>
+    <div class="central">
+        <div id="mapid"></div>
+        <div class="editor"></div>
+    </div>
     <div class="layerbar">
       <div class="layerbar__predefined">
         <h3>SECOORA layers</h3>
@@ -82,6 +102,17 @@ body {
       </div>
     </div>
     <script type="text/javascript">
+
+      // storage engine
+      localforage.config({
+          driver: localforage.LOCALSTORAGE,
+          name: 'secooraPointEntry',
+          storeName: 'secoora_point_entry'
+      });
+
+      // @TODO: default layers get loaded/stored in localforage if no key already in localforage
+
+      var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
 
       // default layers
       var defaultLayers = [
@@ -96,6 +127,8 @@ body {
       // leaflet
       var map = L.map('mapid').setView([30.676, -80.134], 6);
       var layer = new L.StamenTileLayer("terrain-background");
+      //var attribution = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+      //var layer = L.tileLayer('http://{s}.www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png', {attribution: attribution})
       map.addLayer(layer);
 
       // add default layers
@@ -106,8 +139,6 @@ body {
 
       q.awaitAll(function(error, data) {
         //console.log(data);
-
-        var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
         // zip back up with original data
         var newData = _.map(defaultLayers, function(d, i) {
@@ -130,8 +161,6 @@ body {
               }              
           })});
         });
-
-        console.log(newData);
 
         newData.forEach(function(e) {
           e.layer.addTo(map);
@@ -163,6 +192,120 @@ body {
         cards.append('div')
           .attr('class', 'layercard__swatch')
           .style('background-color', function(d) { return d.color });
+      });
+
+      function dataToGeoJson(data) {
+          var features = _.map(data, function(d) {
+            var props = _.omit(d, ['lon', 'lat']);
+            return {
+                type: "Feature",
+                properties: props,
+                geometry: {
+                    type: "Point",
+                    coordinates: [
+                        d.lon,
+                        d.lat
+                    ]
+                }
+            }
+          });
+          return {
+              type: "FeatureCollection",
+              features: features
+          }
+      }
+
+      // USER DEFINED LAYERS
+      localforage.getItem('user-layers').then(function(value) {
+
+        var parsedData = _.map(value, function(d, i) {
+          var gj = dataToGeoJson(d.data),
+            color = colorScale(defaultLayers.length + i);
+
+          return _.assign(d, {
+              layer: L.geoJson(gj, {
+                  pointToLayer: function(feature, latlng) {
+                    return L.circleMarker(latlng, {
+                      radius: 5,
+                      fillColor: color,
+                      color: color,
+                      weight: 1,
+                      opacity: 1,
+                      fillOpacity: 1
+                    });
+                  },
+                  style: {
+                      color: color
+                  }}),
+              color: color,
+              visible: d.visible !== false,
+          });
+        });
+
+        console.log(parsedData);
+
+        parsedData.forEach(function(e) {
+            e.layer.addTo(map);
+        });
+
+        // add to left hand controls
+        var cards = d3.select('.layerbar__user__layers')
+          .selectAll('.layercard')
+          .data(parsedData)
+          .enter()
+          .append('div')
+          .attr('class', 'layercard')
+          .on('click', function(d) {
+            d3.select(this).classed('layercard--disabled', d.visible);
+
+            if (d.visible) {
+              map.removeLayer(d.layer);
+              d.visible = false;
+            } else {
+              map.addLayer(d.layer);
+              d.visible = true;
+            }
+          });
+
+        cards.append('div')
+          .attr('class', 'layercard__text')
+          .text(function(d) { return d.name });
+
+        cards.append('div')
+          .attr('class', 'layercard__swatch')
+          .style('background-color', function(d) { return d.color });
+
+        cards.append('a')
+            .attr('class', 'layercard__edit')
+            .text("edit")
+            .on('click', function(d) { 
+                event.stopPropagation();
+
+                var ed = d3.select('.editor');
+
+                ed.selectAll('*').remove();
+
+                ed.data([d.data])
+                    .call(metatable()
+                    .on('change', function(dd, i) {
+                      console.log("HELLO", dd, i, d);
+
+                      try {
+                        var ll = new L.LatLng(dd.lat, dd.lon);
+                        d.layer.getLayers()[i].setLatLng(ll);
+                      } catch (e) {
+                        // probably just mid edit
+                      }
+                    })
+                    .on('rowfocus', function(dd, i) {
+                      //console.log("FOCUS", dd, i);
+
+                    }));
+
+            });
+
+      }).catch(function(err) {
+          console.error(err)
       });
 
     </script>
