@@ -297,6 +297,23 @@ body {
                         // probably just mid edit
                       }
                     })
+                    .on('newrow', function(dd, i) {
+                      d.data[i] = dd;
+
+                      var lat = parseFloat(dd.lat) || 0,
+                        lon = parseFloat(dd.lon) || 0,
+                        latLng = new L.LatLng(lat, lon),
+                        newLayer = L.circleMarker(latLng, {
+                          radius: 5,
+                          fillColor: d.color,
+                          color: d.color,
+                          weight: 1,
+                          opacity: 1,
+                          fillOpacity: 1
+                      });
+
+                      d.layer.addLayer(newLayer);
+                    })
                     .on('rowfocus', function(dd, i) {
                       //console.log("FOCUS", dd, i);
 

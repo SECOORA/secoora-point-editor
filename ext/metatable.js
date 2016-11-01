@@ -5,7 +5,7 @@ if (typeof module !== 'undefined') {
 }
 
 function metatable(options) {
-    var event = d3.dispatch('change', 'rowfocus', 'renameprompt', 'deleteprompt', 'preventprompt');
+    var event = d3.dispatch('change', 'rowfocus', 'renameprompt', 'deleteprompt', 'preventprompt', 'newrow');
     var _renamePrompt, _deletePrompt;
 
     options = options || {};
@@ -13,8 +13,16 @@ function metatable(options) {
     var config = {
         newCol: options.newCol !== false,
         renameCol: options.renameCol !== false,
-        deleteCol: options.deleteCol !== false
+        deleteCol: options.deleteCol !== false,
+
+        newRow: options.newRow !== false
     };
+
+    function coerceNum(x) {
+        var fl = parseFloat(x);
+        if (fl.toString() === x) return fl;
+        else return x;
+    }
 
     function table(selection) {
         selection.each(function(d) {
@@ -70,6 +78,41 @@ function metatable(options) {
                 var tr = thead.append('tr');
 
                 table = sel.select('table');
+
+                if (config.newRow) {
+                  var tfoot = enter.append('tfoot'),
+                    foottr = tfoot.append('tr'),
+                    keys = keyset.values();
+
+                  var foottd = foottr.selectAll('td').data(keys, function(d) { return d; });
+
+                  foottd.enter()
+                    .append('td')
+                    .append('textarea')
+                    .attr('field', String)
+                    .on('keyup', function() {
+
+                      // grab current data, append new row with stuff from this tfoot row, run paint(), set focus to new row, clear tfoot row
+                      var ta = foottr.selectAll('td textarea'),
+                        selIdx = _.values(ta._groups[0]).indexOf(this),
+                        vals = _.map(ta._groups[0], function(v) { return coerceNum(d3.select(v).property('value')); }),
+                        newRow = _.zipObject(keyset.values(), vals);
+
+                      d.push(newRow);
+                      sel.selectAll('table').data([d]);
+
+                      paint();
+
+                      // clear tfoot textareas
+                      ta.property('value', '');
+
+                      // set focus to the field we just added
+                      this.parentNode.parentNode.parentNode.previousSibling.lastChild.childNodes[selIdx].childNodes[0].focus();
+
+                      // trigger a new row event
+                      event.call("newrow", this, newRow, d.length - 1);
+                    });
+                }
             }
 
             function paint() {
@@ -187,12 +230,6 @@ function metatable(options) {
                             };
                         });
                     paint();
-                }
-
-                function coerceNum(x) {
-                    var fl = parseFloat(x);
-                    if (fl.toString() === x) return fl;
-                    else return x;
                 }
 
                 function write(d) {
