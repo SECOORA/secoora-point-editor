@@ -527,13 +527,13 @@ max-width: 100%;
         // transform geojson into our format
         var gj = $('#new-modal__geojson').val(),
           gjo = JSON.parse(gj),
-          name = $('#new-modal__name').val(),
+          name = $('#new-modal__name').val() || "Unnamed Layer",
           layer = {
             name: name,
             visible: true,
-            data: _.map(gjo.features, function(d) {
+            data: _.map(gjo.features, function(d, i) {
               return _.assign({
-                name: d.properties.name,
+                name: d.properties.name || "Item " + (i+1),
                 lat: d.geometry.coordinates[1],
                 lon: d.geometry.coordinates[0]
               }, d.properties);
