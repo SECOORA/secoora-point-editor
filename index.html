@@ -1,6 +1,10 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
     <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
@@ -12,37 +16,28 @@
     <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>    
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.2/jsgrid.js"></script>
 
+    <link rel="stylesheet" href="ext/bootstrap-flex.css" />
+
     <style>
 body {
-  font-family: sans-serif;
-  display: flex;
-  min-height: 100vh;
-  flex-direction: row;
-  margin: 0px;
 }
 
 .center {
-  display: flex;
-  flex: 1;
 }
 
       .central {
-          display: flex;
-          flex-direction: column;
-        flex: 1;
+        height: 100vh;
       }
 
       #mapid {
-        flex: 1;
+        height: 100%;
       }
 
       .editor {
-        flex: 0 0 25%;
       }
 
       .layerbar {
-        flex: 0 0 25%;
-        order: -1;
+        height: 100vh;
       }
 
       .layerbar__predefined, .layerbar__user {
@@ -50,14 +45,7 @@ body {
       }
 
       .layercard {
-        margin: 5px;
-        background-color: #f6f6f6;
-        border: 1px solid #ccc;
-        border-radius: 2px;
-        padding: 10px;
-
         display: flex;
-        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12)
       }
 
       .layercard:hover {
@@ -86,21 +74,31 @@ body {
   </head>
 
   <body>
-    <div class="central">
-        <div id="mapid"></div>
-        <div class="editor">
-          <div class="editor__grid">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-3">
+          <div class="layerbar">
+            <div class="layerbar__predefined">
+              <h3>SECOORA layers</h3>
+              <ul class="list-group">
+              </ul>
+            </div>
+            <div class="layerbar__user">
+              <h3>User Layers</h3>
+              <div class="layerbar__user__layers list-group">
+
+              </div>
+            </div>
           </div>
         </div>
-    </div>
-    <div class="layerbar">
-      <div class="layerbar__predefined">
-        <h3>SECOORA layers</h3>
-      </div>
-      <div class="layerbar__user">
-        <h3>User Layers</h3>
-        <div class="layerbar__user__layers">
-
+        <div class="col-xs">
+          <div class="central">
+              <div id="mapid"></div>
+              <div class="editor">
+                <div class="editor__grid">
+                </div>
+              </div>
+          </div>
         </div>
       </div>
     </div>
@@ -170,14 +168,14 @@ body {
         });
 
         // add to left hand controls
-        var cards = d3.select('.layerbar__predefined')
-          .selectAll('.layercard')
+        var cards = d3.select('.layerbar__predefined .list-group')
+          .selectAll('li')
           .data(newData)
           .enter()
-          .append('div')
-          .attr('class', 'layercard')
+          .append('li')
+          .attr('class', 'list-group-item')
           .on('click', function(d) {
-            d3.select(this).classed('layercard--disabled', d.visible);
+            d3.select(this).classed('disabled', d.visible);
 
             if (d.visible) {
               map.removeLayer(d.layer);
@@ -189,12 +187,13 @@ body {
           });
 
         cards.append('div')
-          .attr('class', 'layercard__text')
-          .text(function(d) { return d.name });
+          .attr('class', 'tag tag-default tag-pill float-xs-right')
+          .style('background-color', function(d) { return d.color })
+          .html("&nbsp;");
 
         cards.append('div')
-          .attr('class', 'layercard__swatch')
-          .style('background-color', function(d) { return d.color });
+          .attr('class', 'layercard__text')
+          .text(function(d) { return d.name });
       });
 
       function dataToGeoJson(data) {
@@ -265,13 +264,13 @@ body {
 
         // add to left hand controls
         var cards = d3.select('.layerbar__user__layers')
-          .selectAll('.layercard')
+          .selectAll('li')
           .data(parsedData)
           .enter()
-          .append('div')
-          .attr('class', 'layercard')
+          .append('li')
+          .attr('class', 'list-group-item')
           .on('click', function(d) {
-            d3.select(this).classed('layercard--disabled', d.visible);
+            d3.select(this).classed('disabled', d.visible);
 
             if (d.visible) {
               map.removeLayer(d.layer);
@@ -283,12 +282,13 @@ body {
           });
 
         cards.append('div')
-          .attr('class', 'layercard__text')
-          .text(function(d) { return d.name });
+          .attr('class', 'tag tag-default tag-pill float-xs-right')
+          .style('background-color', function(d) { return d.color })
+          .html('&nbsp;');
 
         cards.append('div')
-          .attr('class', 'layercard__swatch')
-          .style('background-color', function(d) { return d.color });
+          .attr('class', 'layercard__text')
+          .text(function(d) { return d.name });
 
         cards.append('a')
             .attr('class', 'layercard__edit')
@@ -421,5 +421,10 @@ body {
       });
 
     </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js" integrity="sha384-3ceskX3iaEnIogmQchP8opvBy3Mi7Ce34nWjpBIwVTHfGYWQS9jwHDVRnpKKHJg7" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.3.7/js/tether.min.js" integrity="sha384-XTs3FgkjiBgo8qjEjBk0tGmf3wPrWtA6coPfQDfFEY8AnYJwjalXCiosYRBIBZX8" crossorigin="anonymous"></script>
+    <script src="ext/bootstrap.min.js"></script>
   </body>
 </html>
+
+
