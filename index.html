@@ -410,11 +410,30 @@ max-width: 100%;
                   }
                 };
 
+                // extend jsgrid with decimal type
+                var DecimalField = function(config) {
+                  jsGrid.Field.call(this, config);
+                };
+
+                DecimalField.prototype = new jsGrid.NumberField({
+                  filterValue: function() { 
+                    return parseFloat(this.filterControl.val());
+                  },
+                  insertValue: function() {
+                    return parseFloat(this.insertControl.val());
+                  },
+                  editValue: function() {
+                    return parseFloat(this.editControl.val());
+                  }
+                });
+
+                jsGrid.fields.decimal = DecimalField;
+
                 // default schema
                 var defaultSchema = [
                   { name: "name", type: "text" },
-                  { name: "lat", type: "number" },
-                  { name: "lon", type: "number" },
+                  { name: "lat", type: "decimal" },
+                  { name: "lon", type: "decimal" },
                 ]
 
                 // grab any additional fields
@@ -433,7 +452,6 @@ max-width: 100%;
 
                 $('.editor__grid').jsGrid({
                   width: "100%",
-                  height: "400px",
 
                   inserting: true,
                   editing: true,
