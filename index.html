@@ -282,14 +282,28 @@ max-width: 100%;
           }
       }
 
-      // USER DEFINED LAYERS
-      localforage.getItem('user-layers').then(function(value) {
+      function save(dataItem) {
+        // set in userLayers
+        if (dataItem.index === undefined) {
+          dataItem.index = window.userLayers.length;
+        }
+        window.userLayers[dataItem.index] = dataItem;
 
-        var parsedData = _.map(value, function(d, i) {
+        // strip presentation attributes from userLayers
+        var saveValue = _.map(window.userLayers, function(d) {
+          return _.omit(d, ['layer', 'color', 'index']);
+        });
+
+        // store in localstorage
+        return localforage.setItem('user-layers', saveValue);
+      }
+
+      function loadUserLayers(value) {
+        window.userLayers = _.map(value, function(d, i) {
           var gj = dataToGeoJson(d.data),
             color = colorScale(defaultLayers.length + i);
 
-          return _.assign(d, {
+          return _.assign({
               layer: L.geoJson(gj, {
                   pointToLayer: function(feature, latlng) {
                     return L.circleMarker(latlng, {
@@ -307,30 +321,13 @@ max-width: 100%;
               color: color,
               visible: d.visible !== false,
               index: i,
-          });
+          }, d);
         });
-
-        console.log(parsedData);
-
-        parsedData.forEach(function(e) {
-            e.layer.addTo(map);
-        });
-
-        function save(dataItem) {
-          // strip presentation attributes from dataItem
-          var newD = _.omit(dataItem, ['layer', 'color', 'index']);
-
-          // set in value
-          value[dataItem.index] = newD;
-
-          // store in localstorage
-          return localforage.setItem('user-layers', value);
-        }
 
         // add to left hand controls
         var cards = d3.select('.layerbar__user__layers')
           .selectAll('li')
-          .data(parsedData)
+          .data(window.userLayers)
           .enter()
           .append('li')
           .attr('class', 'list-group-item')
@@ -345,6 +342,12 @@ max-width: 100%;
               d.visible = true;
             }
           });
+
+        // add map layers on anything in enter selection
+        // @TODO: peeks too much into internals
+        cards._groups[0].forEach(function(e) {
+            e.__data__.layer.addTo(map);
+        });
 
         cards.append('div')
           .attr('class', 'tag tag-default tag-pill float-xs-right')
@@ -481,7 +484,19 @@ max-width: 100%;
                 });
             });
 
-      }).catch(function(err) {
+      }
+
+      // LOAD USER DEFINED LAYERS FROM LOCALSTORAGE
+      localforage.getItem('user-layers')
+        .then(function(value) {
+          if (value === null) {
+            value = [];
+          }
+          window.userLayers = value;
+          return window.userLayers;
+        })
+        .then(loadUserLayers)
+        .catch(function(err) {
           console.error(err)
       });
 
@@ -507,25 +522,13 @@ max-width: 100%;
             })
           };
 
-          console.log(layer);
+        // save to localforage
+        save(layer).then(function() {
+          // reupdate UI
+          loadUserLayers(window.userLayers);
+        });
 
-          // @TODO: save to localforage
-
-          localforage.getItem('user-layers').then(function(value) {
-            if (value === null) {
-              value = [];
-            }
-
-            value.push(layer);
-
-            localforage.setItem('user-layers', value);
-          });
-
-          // reupdate
-
-
-       
-        $('#new-modal').hide();
+        $('#new-modal').modal('hide');
       });
 
     </script>
