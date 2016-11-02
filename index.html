@@ -46,7 +46,7 @@ max-width: 100%;
       }
 
       .editor {
-        flex: 0 0 25%;
+        flex: 0 0 50px;
       }
 
       .layerbar {
@@ -91,6 +91,17 @@ max-width: 100%;
     overflow: hidden;
 }
 
+.editor__toolbar {
+  padding: 3px 0px;
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: row;
+}
+
+.editor__toolbar button {
+  margin: 0px 3px;
+}
+
     </style>
   </head>
 
@@ -98,6 +109,11 @@ max-width: 100%;
     <div class="central">
       <div id="mapid"></div>
       <div class="editor">
+        <div class="editor__toolbar">
+          <button type="button" class="btn btn-danger editor__toolbar__delete" disabled>Delete</button>
+          <button type="button" class="btn btn-success editor__toolbar__export" disabled>Export</button>
+          <button type="button" class="close"><span>&times;</span></button>
+        </div>
         <div class="editor__grid">
         </div>
       </div>
@@ -128,11 +144,15 @@ max-width: 100%;
             <h4 class="modal-title">Export</h4>
           </div>
           <div class="modal-body">
-            <pre><code class="export-modal__code"></code></pre>
+            <form>
+              <div class="form-group">
+                <textarea class="form-control export-modal__code" rows="20"></textarea>
+              </div>
+            </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Download</button>
+            <a class="btn btn-primary export-modal__link" href="#">Download</a>
           </div>
         </div>
       </div>
@@ -364,6 +384,33 @@ max-width: 100%;
             .on('click', function(d) { 
                 event.stopPropagation();
 
+                // enable buttons
+                $('.editor__toolbar button').attr('disabled', false);
+
+                // add handler for export
+                $('.editor__toolbar__export').click(function() {
+                  var gj = dataToGeoJson(d.data),
+                    gjs = JSON.stringify(gj, null, '  ');
+
+                  $('.export-modal__code').val(gjs);
+                  $('.export-modal__link').attr('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(gjs));
+                  $('.export-modal__link').attr('download', d.name + ".geojson");
+                  $('#export-modal').modal();
+                });
+
+                // sizeup editor pane
+                $('.editor').css('flex-basis', '40%');
+
+                // add handler for delete
+                $('.editor__toolbar__delete').click(function() {
+                  if (window.confirm("Do you really want to delete layer " + d.name + "?")) {
+                    // @TODO:
+                    // remove layer from leaflet
+                    // remove from userLayers, store in localforage
+                    // run through updateLayers
+                  }
+                });
+
                 // define data controller for editor view
                 // interfaces with localforage
                 var controller = {
@@ -547,6 +594,18 @@ max-width: 100%;
         });
 
         $('#new-modal').modal('hide');
+      });
+
+      $('.editor .close').click(function() {
+        // shrink editor pane
+        $('.editor').css('flex-basis', '50px');
+
+        // disable toolbar buttons
+        $('.editor__toolbar__export').attr('disabled', true);
+        $('.editor__toolbar__delete').attr('disabled', true);
+
+        // remove jsGrid
+        $('.editor__grid').jsGrid("destroy");
       });
 
     </script>
