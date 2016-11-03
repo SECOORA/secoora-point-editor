@@ -325,6 +325,7 @@ function loadUserLayers(value) {
 
       $('.editor__grid').jsGrid({
         width: "100%",
+        height: "200px",
 
         inserting: true,
         editing: true,

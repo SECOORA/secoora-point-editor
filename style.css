@@ -66,6 +66,10 @@ body {
 .layerbar__user__layers li {
   cursor: pointer;
 }
+.editor {
+  display: flex;
+  flex-direction: column;
+}
 .editor table {
   /*word-break: break-all;*/
 }
@@ -78,6 +82,11 @@ body {
   display: flex;
   justify-content: flex-end;
   flex-direction: row;
+  flex: 0 0 auto;
+}
+
+.editor__grid {
+  flex: 1 0 auto; 
 }
 
 .editor__toolbar button {
