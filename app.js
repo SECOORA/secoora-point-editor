@@ -412,33 +412,38 @@ $('.layerbar__user__add').click(function() {
 
 $('.new-modal__import').click(function() {
 
+  // kill any previous dangers/alerts
+  $('#new-modal').find('form-control-feedback').remove();
+  $('#new-modal').find('.has-danger').removeClass('has-danger');
+  $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
+
+  var invalid = false;
+
   // transform geojson into our format
   try {
     var gj = $('#new-modal__geojson').val(),
       gjo = JSON.parse(gj);
   } catch (e) {
-    $('.new-modal__alert').text('Could not parse GeoJSON: ' + e).show();
-    return;
+    $('#new-modal__geojson').parent().addClass('has-danger')
+      .append('<div class="form-control-feedback">' + 'Could not parse GeoJSON: ' + e + '</div>');
+
+    $('#new-modal__geojson').addClass('form-control-danger');
+    invalid = true;
   }
 
-  // need unique name for layer or we're going to run into trouble
-  var curNames = _.map(window.userLayers, 'name'),
-    name = $('#new-modal__name').val() || null;
+  name = $('#new-modal__name').val();
 
-  // if user didn't enter one, make one up
-  if (name === null) {
-    for (var i = 1; ; i++) {
-      name = "Unnamed Layer " + i;
-      if (curNames.indexOf(name) == -1)
-        break;
-    }
-  } else {
-    if (curNames.indexOf(name) != -1) {
-      $('.new-modal__alert').text('Layer named ' + name + ' already exists!').show();
-      return;
-    }
-  }
-  
+  // if user didn't enter one, it's an error
+  if (!name) {
+    $('#new-modal__name').parent().addClass('has-danger')
+      .append('<div class="form-control-feedback">Name is required</div>');
+
+    $('#new-modal__name').addClass('form-control-danger');
+    invalid = true;
+  }  
+
+  if (invalid) return;
+
   var layer = {
     name: name,
     visible: true,
@@ -482,6 +487,26 @@ function closeEditorPane() {
 
 $('.editor .close').click(closeEditorPane);
 
+$('#new-modal').on('show.bs.modal', function(e) {
+  var curNames = _.map(window.userLayers, 'name'),
+    name = '';
+  for (var i = 1; i < 500; i++) {
+    name = "Unnamed Layer " + i;
+    if (curNames.indexOf(name) == -1)
+      break;
+  }
+
+  if (!name) {
+    throw "500 names?!?";
+  }
+
+  $('#new-modal__name').val(name);
+});
+
+$('#new-modal').on('shown.bs.modal', function(e) {
+  $('#new-modal__name').select().focus();
+});
+
 $('#new-modal__geojson').focus(function() {
   $(this).select();
 });
@@ -494,6 +519,9 @@ $('#new-modal, #export-modal').on('hidden.bs.modal', function(e) {
   var form = $(this).find('form');
   form[0].reset();
 
-  $(this).find('.alert').hide();
+  // kill any dangers/alerts
+  $('#new-modal').find('form-control-feedback').remove();
+  $('#new-modal').find('.has-danger').removeClass('has-danger');
+  $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
 });
 

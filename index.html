@@ -89,17 +89,16 @@
               <div class="form-group">
                 <label for="new-modal__name">Name</label>
                 <input type="text" class="form-control" id="new-modal__name" placeholder="Layer Name" />
-                <label for="new-modal__geojson">GeoJSON</label>
-                <textarea class="form-control" id="new-modal__geojson" rows="20">
+              </div>
+              <div class="form-group">
+                <label for="new-modal__geojson">GeoJSON <span class="tag tag-info">Optional</span></label>
+                <textarea class="form-control" id="new-modal__geojson" rows="10">
 {
   "type": "FeatureCollection",
   "features": []
 }</textarea>
               </div>
             </form>
-
-            <div class="alert alert-danger new-modal__alert">
-            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
