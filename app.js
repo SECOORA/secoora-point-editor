@@ -82,15 +82,19 @@ q.awaitAll(function(error, data) {
       if (d.visible) {
         map.removeLayer(d.layer);
         d.visible = false;
+        reorderLayers();
       } else {
         map.addLayer(d.layer);
         d.visible = true;
+        reorderLayers();
       }
     });
 
   cards.append('div')
     .attr('class', 'layercard__text')
     .text(function(d) { return d.name });
+
+  reorderLayers();
 });
 
 function dataToGeoJson(data) {
@@ -381,9 +385,11 @@ function loadUserLayers(value) {
       if (d.visible) {
         map.removeLayer(d.layer);
         d.visible = false;
+        reorderLayers();
       } else {
         map.addLayer(d.layer);
         d.visible = true;
+        reorderLayers();
       }
     });
 
@@ -391,7 +397,7 @@ function loadUserLayers(value) {
     .attr('class', 'layercard__text')
     .text(function(d) { return d.name });
 
-
+  reorderLayers();
 }
 
 // LOAD USER DEFINED LAYERS FROM LOCALSTORAGE
@@ -534,4 +540,23 @@ $('#new-modal, #export-modal').on('hidden.bs.modal', function(e) {
   $('#new-modal').find('.has-danger').removeClass('has-danger');
   $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
 });
+
+function reorderLayers() {
+  // reverse go through layers in predefined, send them to back
+  var predefined = d3.select('.layerbar__predefined .list-group').selectAll('li').data();
+  predefined.reverse();
+
+  predefined.forEach(function(d) {
+    if (d.visible) {
+      d.layer.bringToBack();
+    }
+  });
+
+  // go through layers in userlayers, send them to front (in order)
+  window.userLayers.forEach(function(d) {
+    if (d.visible) {
+      d.layer.bringToFront();
+    }
+  });
+}
 
