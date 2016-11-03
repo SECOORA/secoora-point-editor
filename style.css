@@ -1,0 +1,90 @@
+body {
+  font-family: sans-serif;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  flex-direction: row;
+  margin: 0px;
+}
+
+.center {
+  max-width: 100%;
+  display: flex;
+  flex: 1;
+}
+
+.central {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 75%;
+}
+
+#mapid {
+  flex: 1;
+}
+
+.editor {
+  flex: 0 0 50px;
+}
+
+.layerbar {
+  flex: 0 0 25%;
+  order: -1;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+.layerbar {
+  padding: 10px;
+}
+
+.layerbar__user, .layerbar__user__add {
+  margin-top: 10px;
+}
+
+.layercard {
+  display: flex;
+}
+
+.layercard:hover {
+  cursor: pointer;
+}
+
+.layercard--disabled {
+  color: #ccc;
+  background-color: white;
+}
+
+.layercard__swatch {
+  cursor: pointer;
+}
+
+.layercard__text {
+  flex: 1;
+}
+.layerbar__user__layers li {
+  cursor: pointer;
+}
+.editor table {
+  /*word-break: break-all;*/
+}
+.editor table td, .editor table th {
+  overflow: hidden;
+}
+
+.editor__toolbar {
+  padding: 3px 0px;
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: row;
+}
+
+.editor__toolbar button {
+  margin: 0px 3px;
+}
+
+.new-modal__alert {
+  display: none;
+}
+
