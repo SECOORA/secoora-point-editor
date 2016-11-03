@@ -72,18 +72,15 @@ max-width: 100%;
       }
 
       .layercard__swatch {
-        border-radius: 6px;
-        border: 1px solid #555;
-
-        width: 1em;
-        height: 1em;
-        margin-right: 0.3em;
+        cursor: pointer;
       }
 
       .layercard__text {
         flex: 1;
       }
-
+      .layerbar__user__layers li {
+        cursor: pointer;
+      }
 .editor table {
     /*word-break: break-all;*/
 }
@@ -258,9 +255,14 @@ max-width: 100%;
           .data(newData)
           .enter()
           .append('li')
-          .attr('class', 'list-group-item')
+          .attr('class', 'list-group-item');
+
+        cards.append('div')
+          .attr('class', 'tag tag-default tag-pill float-xs-right layercard__swatch')
+          .style('background-color', function(d) { return d.color })
+          .html("&nbsp;")
           .on('click', function(d) {
-            d3.select(this).classed('disabled', d.visible);
+            d3.select(this.parentNode).classed('disabled', d.visible);
 
             if (d.visible) {
               map.removeLayer(d.layer);
@@ -270,11 +272,6 @@ max-width: 100%;
               d.visible = true;
             }
           });
-
-        cards.append('div')
-          .attr('class', 'tag tag-default tag-pill float-xs-right')
-          .style('background-color', function(d) { return d.color })
-          .html("&nbsp;");
 
         cards.append('div')
           .attr('class', 'layercard__text')
@@ -377,8 +374,193 @@ max-width: 100%;
         var cards = selCards.enter()
           .append('li')
           .attr('class', 'list-group-item')
+          .on('click', function(d) { 
+            d3.select(this).classed('list-group-item-info', true);
+
+            // enable buttons
+            $('.editor__toolbar button').attr('disabled', false);
+
+            // add handler for export
+            $('.editor__toolbar__export').off('click');
+            $('.editor__toolbar__export').click(function() {
+              var gj = dataToGeoJson(d.data),
+                gjs = JSON.stringify(gj, null, '  ');
+
+              $('.export-modal__code').val(gjs);
+              $('.export-modal__link').attr('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(gjs));
+              $('.export-modal__link').attr('download', d.name + ".geojson");
+              $('#export-modal').modal();
+            });
+
+            // sizeup editor pane
+            $('.editor').css('flex-basis', '40%');
+
+            // add handler for delete
+            $('.editor__toolbar__delete').off('click');
+            $('.editor__toolbar__delete').click(function() {
+              if (window.confirm("Do you really want to delete layer " + d.name + "?")) {
+                // remove from userLayers, store in localforage
+                window.userLayers.splice(d.index, 1);
+                _save();    // we're not updating or adding so just use internal save current
+
+                // run through updateLayers
+                loadUserLayers(window.userLayers);
+
+                // close editor
+                closeEditorPane();
+              }
+            });
+
+            // define data controller for editor view
+            // interfaces with localforage
+            var controller = {
+              loadData: function(filter) {
+                console.log("LOADING", d.data);
+                return _.map(d.data, function(dd, ii) {
+                  return _.assign({_idx: ii}, dd);
+                });
+              },
+              insertItem: function(item) {
+                console.log("INSERT", item);
+                
+                // append new item to d
+                var newIdx = d.data.length;
+                d.data[newIdx] = _.clone(item);
+
+                // store in localstorage
+                return save(d).then(function() {
+                  item._idx = newIdx;
+                  return item;
+                });
+              },
+              updateItem: function(item) {
+                console.log("UPDATE", item);
+
+                var idx = item._idx,
+                  newItem = _.omit(item, ['_idx']);
+
+                d.data[idx] = newItem;
+
+                // store in localstorage
+                return save(d).then(function() {
+                  return item;
+                });
+              },
+              deleteItem: function(item) {
+                console.log("DELETE", item);
+
+                var idx = item._idx;
+                d.data.splice(idx, 1);
+
+                // store in localstorage
+                return save(d);
+              }
+            };
+
+            // extend jsgrid with decimal type
+            var DecimalField = function(config) {
+              jsGrid.Field.call(this, config);
+            };
+
+            DecimalField.prototype = new jsGrid.NumberField({
+              filterValue: function() { 
+                return parseFloat(this.filterControl.val());
+              },
+              insertValue: function() {
+                return parseFloat(this.insertControl.val());
+              },
+              editValue: function() {
+                return parseFloat(this.editControl.val());
+              }
+            });
+
+            jsGrid.fields.decimal = DecimalField;
+
+            // default schema
+            var defaultSchema = [
+              { name: "name", type: "text" },
+              { name: "lat", type: "decimal" },
+              { name: "lon", type: "decimal" },
+            ]
+
+            // grab any additional fields
+            var schema = defaultSchema.concat(_.map(_.filter(_.uniq(_.flatten(_.map(d.data, function(dd) {
+              return _.keys(dd);
+            }))), function(dd) {
+              return _.map(defaultSchema, 'name').indexOf(dd) == -1;
+            }), function(dd) {
+              return {
+                name: dd,
+                type: "text"
+              }
+            }));
+
+            schema.push({type: "control"});
+
+            $('.editor__grid').jsGrid({
+              width: "100%",
+
+              inserting: true,
+              editing: true,
+              sorting: false,
+              paging: false,
+
+              autoload: true,
+              fields: schema,
+              controller: controller,
+
+              onItemInserted: function(args) {
+                // new layer for new item
+                var item = args.item,
+                  lat = parseFloat(item.lat) || 0,
+                  lon = parseFloat(item.lon) || 0,
+                  latlng = new L.LatLng(lat, lon),
+                  marker = L.circleMarker(latlng, {
+                    radius: 5,
+                    fillColor: d.color,
+                    color: d.color,
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 1
+                  });
+
+                marker.bindPopup(item.name);
+                d.layer.addLayer(marker);
+              },
+
+              onItemUpdated: function(args) {
+                // adjust marker
+                var item = args.item,
+                  lat = parseFloat(item.lat) || 0,
+                  lon = parseFloat(item.lon) || 0,
+                  latlng = new L.LatLng(lat, lon),
+                  marker = d.layer.getLayers()[item._idx];
+
+                marker.setLatLng(latlng);
+                marker.bindPopup(item.name);
+              },
+
+              onItemDeleted: function(args) {
+                // remove marker!
+                var item = args.item,
+                  marker = d.layer.getLayers()[item._idx];
+                d.layer.removeLayer(marker);
+              }
+              });
+          });
+
+        // add map layers on anything in enter selection
+        // @TODO: peeks too much into internals
+        cards._groups[0].forEach(function(e) {
+            e.__data__.layer.addTo(map);
+        });
+
+        cards.append('div')
+          .attr('class', 'tag tag-default tag-pill float-xs-right layercard__swatch')
+          .style('background-color', function(d) { return d.color })
+          .html('&nbsp;')
           .on('click', function(d) {
-            d3.select(this).classed('disabled', d.visible);
+            d3.select(this.parentNode).classed('disabled', d.visible);
 
             if (d.visible) {
               map.removeLayer(d.layer);
@@ -389,198 +571,10 @@ max-width: 100%;
             }
           });
 
-        // add map layers on anything in enter selection
-        // @TODO: peeks too much into internals
-        cards._groups[0].forEach(function(e) {
-            e.__data__.layer.addTo(map);
-        });
-
-        cards.append('div')
-          .attr('class', 'tag tag-default tag-pill float-xs-right')
-          .style('background-color', function(d) { return d.color })
-          .html('&nbsp;');
-
         cards.append('div')
           .attr('class', 'layercard__text')
           .text(function(d) { return d.name });
 
-        cards.append('a')
-            .attr('class', 'layercard__edit')
-            .text("edit")
-            .on('click', function(d) { 
-                event.stopPropagation();
-
-                // enable buttons
-                $('.editor__toolbar button').attr('disabled', false);
-
-                // add handler for export
-                $('.editor__toolbar__export').off('click');
-                $('.editor__toolbar__export').click(function() {
-                  var gj = dataToGeoJson(d.data),
-                    gjs = JSON.stringify(gj, null, '  ');
-
-                  $('.export-modal__code').val(gjs);
-                  $('.export-modal__link').attr('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(gjs));
-                  $('.export-modal__link').attr('download', d.name + ".geojson");
-                  $('#export-modal').modal();
-                });
-
-                // sizeup editor pane
-                $('.editor').css('flex-basis', '40%');
-
-                // add handler for delete
-                $('.editor__toolbar__delete').off('click');
-                $('.editor__toolbar__delete').click(function() {
-                  if (window.confirm("Do you really want to delete layer " + d.name + "?")) {
-                    // remove from userLayers, store in localforage
-                    window.userLayers.splice(d.index, 1);
-                    _save();    // we're not updating or adding so just use internal save current
-
-                    // run through updateLayers
-                    loadUserLayers(window.userLayers);
-
-                    // close editor
-                    closeEditorPane();
-                  }
-                });
-
-                // define data controller for editor view
-                // interfaces with localforage
-                var controller = {
-                  loadData: function(filter) {
-                    console.log("LOADING", d.data);
-                    return _.map(d.data, function(dd, ii) {
-                      return _.assign({_idx: ii}, dd);
-                    });
-                  },
-                  insertItem: function(item) {
-                    console.log("INSERT", item);
-                    
-                    // append new item to d
-                    var newIdx = d.data.length;
-                    d.data[newIdx] = _.clone(item);
-
-                    // store in localstorage
-                    return save(d).then(function() {
-                      item._idx = newIdx;
-                      return item;
-                    });
-                  },
-                  updateItem: function(item) {
-                    console.log("UPDATE", item);
-
-                    var idx = item._idx,
-                      newItem = _.omit(item, ['_idx']);
-
-                    d.data[idx] = newItem;
-
-                    // store in localstorage
-                    return save(d).then(function() {
-                      return item;
-                    });
-                  },
-                  deleteItem: function(item) {
-                    console.log("DELETE", item);
-
-                    var idx = item._idx;
-                    d.data.splice(idx, 1);
-
-                    // store in localstorage
-                    return save(d);
-                  }
-                };
-
-                // extend jsgrid with decimal type
-                var DecimalField = function(config) {
-                  jsGrid.Field.call(this, config);
-                };
-
-                DecimalField.prototype = new jsGrid.NumberField({
-                  filterValue: function() { 
-                    return parseFloat(this.filterControl.val());
-                  },
-                  insertValue: function() {
-                    return parseFloat(this.insertControl.val());
-                  },
-                  editValue: function() {
-                    return parseFloat(this.editControl.val());
-                  }
-                });
-
-                jsGrid.fields.decimal = DecimalField;
-
-                // default schema
-                var defaultSchema = [
-                  { name: "name", type: "text" },
-                  { name: "lat", type: "decimal" },
-                  { name: "lon", type: "decimal" },
-                ]
-
-                // grab any additional fields
-                var schema = defaultSchema.concat(_.map(_.filter(_.uniq(_.flatten(_.map(d.data, function(dd) {
-                  return _.keys(dd);
-                }))), function(dd) {
-                  return _.map(defaultSchema, 'name').indexOf(dd) == -1;
-                }), function(dd) {
-                  return {
-                    name: dd,
-                    type: "text"
-                  }
-                }));
-
-                schema.push({type: "control"});
-
-                $('.editor__grid').jsGrid({
-                  width: "100%",
-
-                  inserting: true,
-                  editing: true,
-                  sorting: false,
-                  paging: false,
-
-                  autoload: true,
-                  fields: schema,
-                  controller: controller,
-
-                  onItemInserted: function(args) {
-                    // new layer for new item
-                    var item = args.item,
-                      lat = parseFloat(item.lat) || 0,
-                      lon = parseFloat(item.lon) || 0,
-                      latlng = new L.LatLng(lat, lon),
-                      marker = L.circleMarker(latlng, {
-                        radius: 5,
-                        fillColor: d.color,
-                        color: d.color,
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 1
-                      });
-
-                    marker.bindPopup(item.name);
-                    d.layer.addLayer(marker);
-                  },
-
-                  onItemUpdated: function(args) {
-                    // adjust marker
-                    var item = args.item,
-                      lat = parseFloat(item.lat) || 0,
-                      lon = parseFloat(item.lon) || 0,
-                      latlng = new L.LatLng(lat, lon),
-                      marker = d.layer.getLayers()[item._idx];
-
-                    marker.setLatLng(latlng);
-                    marker.bindPopup(item.name);
-                  },
-
-                  onItemDeleted: function(args) {
-                    // remove marker!
-                    var item = args.item,
-                      marker = d.layer.getLayers()[item._idx];
-                    d.layer.removeLayer(marker);
-                  }
-                });
-            });
 
       }
 
@@ -641,6 +635,9 @@ max-width: 100%;
 
         // remove jsGrid
         $('.editor__grid').jsGrid("destroy");
+
+        // remove any editing highlight from user pane list items
+        d3.selectAll('.layerbar__user__layers .list-group-item-info').classed('list-group-item-info', false);
       }
 
       $('.editor .close').click(closeEditorPane);
