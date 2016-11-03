@@ -52,6 +52,8 @@ max-width: 100%;
       .layerbar {
         flex: 0 0 25%;
         order: -1;
+        max-height: 100vh;
+        overflow: auto;
       }
 
       .layerbar {
@@ -101,6 +103,10 @@ max-width: 100%;
 
 .editor__toolbar button {
   margin: 0px 3px;
+}
+
+.new-modal__alert {
+  display: none;
 }
 
     </style>
@@ -181,6 +187,9 @@ max-width: 100%;
   } </textarea>
               </div>
             </form>
+
+            <div class="alert alert-danger new-modal__alert">
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -567,6 +576,7 @@ max-width: 100%;
           .style('background-color', function(d) { return d.color })
           .html('&nbsp;')
           .on('click', function(d) {
+            d3.event.stopPropagation();
             d3.select(this.parentNode).classed('disabled', d.visible);
 
             if (d.visible) {
@@ -606,20 +616,43 @@ max-width: 100%;
       $('.new-modal__import').click(function() {
 
         // transform geojson into our format
-        var gj = $('#new-modal__geojson').val(),
-          gjo = JSON.parse(gj),
-          name = $('#new-modal__name').val() || "Unnamed Layer",
-          layer = {
-            name: name,
-            visible: true,
-            data: _.map(gjo.features, function(d, i) {
-              return _.assign({
-                name: d.properties.name || "Item " + (i+1),
-                lat: d.geometry.coordinates[1],
-                lon: d.geometry.coordinates[0]
-              }, d.properties);
-            })
-          };
+        try {
+          var gj = $('#new-modal__geojson').val(),
+            gjo = JSON.parse(gj);
+        } catch (e) {
+          $('.new-modal__alert').text('Could not parse GeoJSON: ' + e).show();
+          return;
+        }
+
+        // need unique name for layer or we're going to run into trouble
+        var curNames = _.map(window.userLayers, 'name'),
+          name = $('#new-modal__name').val() || null;
+
+        // if user didn't enter one, make one up
+        if (name === null) {
+          for (var i = 1; ; i++) {
+            name = "Unnamed Layer " + i;
+            if (curNames.indexOf(name) == -1)
+              break;
+          }
+        } else {
+          if (curNames.indexOf(name) != -1) {
+            $('.new-modal__alert').text('Layer named ' + name + ' already exists!').show();
+            return;
+          }
+        }
+        
+        var layer = {
+          name: name,
+          visible: true,
+          data: _.map(gjo.features, function(d, i) {
+            return _.assign({
+              name: d.properties.name || "Item " + (i+1),
+              lat: d.geometry.coordinates[1],
+              lon: d.geometry.coordinates[0]
+            }, d.properties);
+          })
+        };
 
         // save to localforage
         save(layer).then(function() {
@@ -627,6 +660,7 @@ max-width: 100%;
           loadUserLayers(window.userLayers);
         });
 
+        closeEditorPane();
         $('#new-modal').modal('hide');
       });
 
@@ -662,6 +696,8 @@ max-width: 100%;
       $('#new-modal, #export-modal').on('hidden.bs.modal', function(e) {
         var form = $(this).find('form');
         form[0].reset();
+
+        $(this).find('.alert').hide();
       });
 
 
