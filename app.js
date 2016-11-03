@@ -421,8 +421,16 @@ $('.new-modal__import').click(function() {
 
   // transform geojson into our format
   try {
-    var gj = $('#new-modal__geojson').val(),
-      gjo = JSON.parse(gj);
+    var gj = $('#new-modal__geojson').val();
+
+    if (!gj) {
+      gj = {
+        type: "FeatureCollection",
+        features: []
+      };
+    }
+
+    var gjo = JSON.parse(gj);
   } catch (e) {
     $('#new-modal__geojson').parent().addClass('has-danger')
       .append('<div class="form-control-feedback">' + 'Could not parse GeoJSON: ' + e + '</div>');
