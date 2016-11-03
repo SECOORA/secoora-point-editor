@@ -88,3 +88,17 @@ body {
   display: none;
 }
 
+.map-popup-table {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.map-popup-table td {
+  white-space: nowrap;
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.map-popup-table td:first-child {
+  font-weight: bold;
+}

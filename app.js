@@ -56,7 +56,10 @@ q.awaitAll(function(error, data) {
           color: colorScale(i),
           weight: 1,
           opacity: 0.5,
-        }              
+        },
+        onEachFeature: function(feature, layer) {
+          setPopup(feature.properties, layer);
+        }
     })});
   });
 
@@ -155,18 +158,22 @@ function loadUserLayers(value) {
     // only create/assign layer if we don't already have one
     if (d.layer === undefined) {
         d.layer = L.geoJson(gj, {
-            pointToLayer: function(feature, latlng) {
-              return L.circleMarker(latlng, {
-                radius: 5,
-                fillColor: color,
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 1
-              });
-            },
-            style: {
-                color: color
-            }});
+          pointToLayer: function(feature, latlng) {
+            return L.circleMarker(latlng, {
+              radius: 5,
+              fillColor: color,
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 1
+            });
+          },
+          style: {
+              color: color
+          },
+          onEachFeature: function(feature, layer) {
+            setPopup(feature.properties, layer);
+          }
+        });
     }
 
     return d;
@@ -343,7 +350,7 @@ function loadUserLayers(value) {
               fillOpacity: 1
             });
 
-          marker.bindPopup(item.name);
+          setPopup(_.omit(item, ['lat', 'lon', '_idx']), marker);
           d.layer.addLayer(marker);
         },
 
@@ -356,7 +363,7 @@ function loadUserLayers(value) {
             marker = d.layer.getLayers()[item._idx];
 
           marker.setLatLng(latlng);
-          marker.bindPopup(item.name);
+          setPopup(_.omit(item, ['lat', 'lon', '_idx']), marker);
         },
 
         onItemDeleted: function(args) {
@@ -365,7 +372,7 @@ function loadUserLayers(value) {
             marker = d.layer.getLayers()[item._idx];
           d.layer.removeLayer(marker);
         }
-        });
+      });
     });
 
   // add map layers on anything in enter selection
@@ -558,5 +565,17 @@ function reorderLayers() {
       d.layer.bringToFront();
     }
   });
+}
+
+function setPopup(properties, layer) {
+  var desc = "";
+  for (var key in properties) {
+    desc = desc + "<tr><td>" + key + "</td><td>" + properties[key] + "</td></tr>\n";
+  }
+  if (layer) {
+    layer.bindPopup("<table class='map-popup-table'>" + desc + "</table>");
+  }
+
+  return desc;
 }
 
