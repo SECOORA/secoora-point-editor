@@ -7,7 +7,8 @@ localforage.config({
 
 // @TODO: default layers get loaded/stored in localforage if no key already in localforage
 
-var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+var colorScale = d3.scaleOrdinal(d3.schemeDark2),
+  userColorScale = d3.scaleOrdinal(d3.schemePastel2);
 
 // default layers
 var defaultLayers = [
@@ -21,9 +22,10 @@ var defaultLayers = [
 
 // leaflet
 var map = L.map('mapid').setView([30.676, -80.134], 6);
-var layer = new L.StamenTileLayer("terrain-background");
+//var layer = new L.StamenTileLayer("terrain-background");
 //var attribution = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
 //var layer = L.tileLayer('http://{s}.www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png', {attribution: attribution})
+var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{ attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>' });
 map.addLayer(layer);
 
 // add default layers
@@ -42,17 +44,18 @@ q.awaitAll(function(error, data) {
       layer: L.geoJson(data[i], {
         pointToLayer: function(feature, latlng) {
           return L.circleMarker(latlng, {
-            radius: 5,
+            radius: 3,
             fillColor: colorScale(i),
             color: colorScale(i),
             weight: 1,
             opacity: 1,
-            fillOpacity: 1
+            fillOpacity: 0.5
           });
         },
         style: {
           color: colorScale(i),
-          weight: 2
+          weight: 1,
+          opacity: 0.5,
         }              
     })});
   });
@@ -136,7 +139,7 @@ function _save() {
 function loadUserLayers(value) {
   window.userLayers = _.map(value, function(d, i) {
     var gj = dataToGeoJson(d.data),
-      color = colorScale(defaultLayers.length + i);
+      color = userColorScale(i);
 
     // always assign color/visible/index, index will change!
     _.assign(d, {
@@ -152,7 +155,6 @@ function loadUserLayers(value) {
               return L.circleMarker(latlng, {
                 radius: 5,
                 fillColor: color,
-                color: color,
                 weight: 1,
                 opacity: 1,
                 fillOpacity: 1
