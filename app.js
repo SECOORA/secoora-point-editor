@@ -73,14 +73,9 @@ q.awaitAll(function(error, data) {
     .data(newData)
     .enter()
     .append('li')
-    .attr('class', 'list-group-item');
-
-  cards.append('div')
-    .attr('class', 'tag tag-default tag-pill float-xs-right layercard__swatch')
-    .style('background-color', function(d) { return d.color })
-    .html("&nbsp;")
+    .attr('class', 'list-group-item')
     .on('click', function(d) {
-      d3.select(this.parentNode).classed('disabled', d.visible);
+      d3.select(this).classed('disabled', d.visible);
 
       if (d.visible) {
         map.removeLayer(d.layer);
@@ -92,6 +87,11 @@ q.awaitAll(function(error, data) {
         reorderLayers();
       }
     });
+
+  cards.append('div')
+    .attr('class', 'tag tag-default tag-pill float-xs-right layercard__swatch')
+    .style('background-color', function(d) { return d.color })
+    .html("&nbsp;");
 
   cards.append('div')
     .attr('class', 'layercard__text')

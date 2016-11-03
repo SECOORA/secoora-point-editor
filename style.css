@@ -63,7 +63,7 @@ body {
 .layercard__text {
   flex: 1;
 }
-.layerbar__user__layers li {
+.layerbar .list-group li {
   cursor: pointer;
 }
 .editor {
