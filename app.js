@@ -297,14 +297,66 @@ function loadUserLayers(value) {
         },
         editValue: function() {
           return parseFloat(this.editControl.val());
+        },
+        editTemplate: function(value) {
+          var template = jsGrid.NumberField.prototype.editTemplate.call(this, value);
+          template.on('keydown', null, this._grid, function(e) {
+            if (e.which === 13) {
+              e.data.updateItem();
+            } else if (e.keyCode === 27) {
+              e.data.cancelEdit();
+            }
+          });
+          return template;
+        },
+        insertTemplate: function(value) {
+          var template = jsGrid.NumberField.prototype.insertTemplate.call(this, value);
+          template.on('keydown', null, this._grid, function(e) {
+            var grid = e.data;
+            if (e.which === 13) {
+              grid.insertItem().done(function() {
+                grid.clearInsert(); 
+              });
+            } else if (e.keyCode === 27) {
+              $('.' + jsGrid.ControlField.prototype.insertModeButtonClass).click();
+            }
+          });
+          return template;
         }
       });
 
       jsGrid.fields.decimal = DecimalField;
 
+      function genEnterEditor(value) {
+        var template = jsGrid.TextField.prototype.editTemplate.call(this, value);
+        template.on('keydown', null, this._grid, function(e) {
+          if (e.which === 13) {
+            e.data.updateItem();
+          } else if (e.keyCode === 27) {
+            e.data.cancelEdit();
+          }
+        });
+        return template;
+      }
+
+      function genInsertTemplate(value) {
+        var template = jsGrid.TextField.prototype.insertTemplate.call(this, value);
+        template.on('keydown', null, this._grid, function(e) {
+          var grid = e.data;
+          if (e.which === 13) {
+            grid.insertItem().done(function() {
+              grid.clearInsert(); 
+            });
+          } else if (e.keyCode === 27) {
+            $('.' + jsGrid.ControlField.prototype.insertModeButtonClass).click();
+          }
+        });
+        return template;
+      }
+
       // default schema
       var defaultSchema = [
-        { name: "name", type: "text" },
+        { name: "name", type: "text", editTemplate: genEnterEditor, insertTemplate: genInsertTemplate},
         { name: "lat", type: "decimal" },
         { name: "lon", type: "decimal" },
       ]
@@ -317,7 +369,9 @@ function loadUserLayers(value) {
       }), function(dd) {
         return {
           name: dd,
-          type: "text"
+          type: "text",
+          editTemplate: genEnterEditor,
+          insertTemplate: genInsertTemplate
         }
       }));
 
