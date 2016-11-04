@@ -241,13 +241,13 @@ function loadUserLayers(value) {
       // interfaces with localforage
       var controller = {
         loadData: function(filter) {
-          console.log("LOADING", d.data);
+          //console.log("LOADING", d.data);
           return _.map(d.data, function(dd, ii) {
             return _.assign({_idx: ii}, dd);
           });
         },
         insertItem: function(item) {
-          console.log("INSERT", item);
+          //console.log("INSERT", item);
           
           // append new item to d
           var newIdx = d.data.length;
@@ -260,7 +260,7 @@ function loadUserLayers(value) {
           });
         },
         updateItem: function(item) {
-          console.log("UPDATE", item);
+          //console.log("UPDATE", item);
 
           var idx = item._idx,
             newItem = _.omit(item, ['_idx']);
@@ -273,7 +273,7 @@ function loadUserLayers(value) {
           });
         },
         deleteItem: function(item) {
-          console.log("DELETE", item);
+          //console.log("DELETE", item);
 
           var idx = item._idx;
           d.data.splice(idx, 1);
