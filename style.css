@@ -111,3 +111,7 @@ body {
 .map-popup-table td:first-child {
   font-weight: bold;
 }
+
+#new-modal .btn-group label {
+  pointer-events: none;
+}

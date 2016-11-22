@@ -480,6 +480,87 @@ $('.layerbar__user__add').click(function() {
   $('#new-modal').modal();
 });
 
+// attempt to parse value and determine format
+// returns an object
+// {
+//   type: 'geojson' | 'csv' | 'unknown',
+//   error: ...  // only set if there was an issue.  type will be set to what we thought it might be
+//   data: ...
+// }
+function tryParse(val) {
+    var contents = $('#new-modal__contents').val(),
+      err = null;
+
+    // first, try parsing it as JSON as that's more strict.
+
+    try {
+      var gjo = JSON.parse(contents);
+
+      return {
+        type: 'geojson',
+        data: gjo
+      }
+
+    } catch (e) {
+      // should we bother parsing with CSV?
+      if (contents.trim().startsWith("{")) {
+        return {
+          type: 'geojson',
+          error: e,
+          data: null
+        }
+      }
+    }
+
+    var csvParsed = Papa.parse(contents, {
+      header: true,
+      dynamicTyping: true
+    });
+
+    // how to validate csv?
+
+    return {
+      type: 'csv',
+      data: csvParsed
+    }
+
+    // TODO
+    return {
+      type: 'unknown',
+      error: 'Could not determine format of contents',
+      data: null
+    }
+}
+
+function findSimilar(fields, name) {
+  var weights = _.map(fields, function(d) {
+    return {
+      name: d,
+      weight: jaro_winkler.distance(name, d)
+    };
+  });
+
+  // 0.6 arbitrarily chosen!
+  var filtered = _.reject(_.sortBy(weights, 'weight').reverse(), function(o) { return o.weight < 0.6 });
+  if (filtered.length == 0) {
+    return null;
+  }
+
+  return filtered[0].name;
+}
+
+function parseHint() {
+  var val = $('#new-modal__contents').val(),
+    parsedData = tryParse(val);
+
+  console.debug("parseHint", parsedData.type);
+  // if we know for sure, change buttons
+  $('#new-modal .btn-group label').removeClass('active btn-success');
+  $('#format-' + parsedData.type).parent().addClass('active btn-success');
+}
+
+$('#new-modal__contents').on('change keyup paste', _.debounce(parseHint, 500));
+
 $('.new-modal__import').click(function() {
 
   // kill any previous dangers/alerts
@@ -487,31 +568,13 @@ $('.new-modal__import').click(function() {
   $('#new-modal').find('.has-danger').removeClass('has-danger');
   $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
 
-  var invalid = false;
-
-  // transform geojson into our format
-  try {
-    var gj = $('#new-modal__geojson').val();
-
-    if (!gj) {
-      gj = {
-        type: "FeatureCollection",
-        features: []
-      };
-    }
-
-    var gjo = JSON.parse(gj);
-  } catch (e) {
-    $('#new-modal__geojson').parent().addClass('has-danger')
-      .append('<div class="form-control-feedback">' + 'Could not parse GeoJSON: ' + e + '</div>');
-
-    $('#new-modal__geojson').addClass('form-control-danger');
-    invalid = true;
-  }
-
-  name = $('#new-modal__name').val();
-
-  // if user didn't enter one, it's an error
+  var invalid = false,
+    contents = $('#new-modal__contents').val(),
+    name = $('#new-modal__name').val(),
+    parsedData = null,
+    layerData = null;
+  
+  // if user didn't enter a name, it's an error
   if (!name) {
     $('#new-modal__name').parent().addClass('has-danger')
       .append('<div class="form-control-feedback">Name is required</div>');
@@ -520,18 +583,58 @@ $('.new-modal__import').click(function() {
     invalid = true;
   }  
 
+  // do we have anything to even parse?
+  if (contents.trim().length > 0) {
+
+    parsedData = tryParse(contents);
+
+    if (parsedData.hasOwnProperty('error')) {
+      $('#new-modal__contents').parent().addClass('has-danger')
+        .append('<div class="form-control-feedback">' + 'Could not parse: ' + parsedData.error + '</div>');
+
+      $('#new-modal__contents').addClass('form-control-danger');
+      invalid = true;
+    }
+  }
+
   if (invalid) return;
 
-  var layer = {
-    name: name,
-    visible: true,
-    data: _.map(gjo.features, function(d, i) {
+  if (parsedData.type == 'geojson') {
+    layerData = _.map(parsedData.data.features, function(d, i) {
       return _.assign({
         name: d.properties.name || "Item " + (i+1),
         lat: d.geometry.coordinates[1],
         lon: d.geometry.coordinates[0]
       }, d.properties);
     })
+  } else if (parsedData.type == 'csv') {
+    // find lat/lon
+    var latName = findSimilar(parsedData.data.meta.fields, 'lat'),
+      lonName = findSimilar(parsedData.data.meta.fields, 'lon');
+
+    console.debug("Lat field:", latName, "Lon field:", lonName);
+
+    if (latName === null || lonName === null) {
+      $('#new-modal').one('hidden.bs.modal', function(e) {
+        window.alert("Could not find lat (" + latName + ") or lon (" + lonName + "), blank values used.");
+      });
+
+    }
+
+    // transform data
+    layerData = _.map(parsedData.data.data, function(d, i) {
+      return _.assign({
+        name: d.name || "Item " + (i+1),
+        lat: d[latName] || 0.0,
+        lon: d[lonName] || 0.0
+      }, _.omit(d, [latName, lonName]));
+    });
+  }
+
+  var layer = {
+    name: name,
+    visible: true,
+    data: layerData
   };
 
   // save to localforage
@@ -585,7 +688,7 @@ $('#new-modal').on('shown.bs.modal', function(e) {
   $('#new-modal__name').select().focus();
 });
 
-$('#new-modal__geojson').focus(function() {
+$('#new-modal__contents').focus(function() {
   $(this).select();
 });
 
@@ -598,7 +701,7 @@ $('#new-modal, #export-modal').on('hidden.bs.modal', function(e) {
   form[0].reset();
 
   // kill any dangers/alerts
-  $('#new-modal').find('form-control-feedback').remove();
+  $('#new-modal').find('.form-control-feedback').remove();
   $('#new-modal').find('.has-danger').removeClass('has-danger');
   $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
 });

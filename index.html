@@ -19,6 +19,8 @@
     <script type="text/javascript" src="ext/jsgrid.js"></script>
     <link rel="stylesheet" href="ext/bootstrap-flex.css" />
     <script src="ext/d3-scale-chromatic.v1.min.js"></script>
+    <script src="ext/papaparse.min.js"></script>
+    <script src="ext/jaro_winkler.js"></script>
 
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -88,16 +90,42 @@
           <div class="modal-body">
             <form>
               <div class="form-group">
-                <label for="new-modal__name">Name</label>
+                <label for="new-modal__name" class="col-form-label">Name</label>
                 <input type="text" class="form-control" id="new-modal__name" placeholder="Layer Name" />
               </div>
+              <label class="">Import <span class="tag tag-info">Optional</span></label>
+
               <div class="form-group">
-                <label for="new-modal__geojson">GeoJSON <span class="tag tag-info">Optional</span></label>
-                <textarea class="form-control" id="new-modal__geojson" rows="10">
+                <div class="card">
+                  <div class="card-header">
+
+                    <div class="btn-group float-xs-right" data-toggle="buttons">
+                      <label class="btn btn-secondary btn-sm active">
+                        <input id="format-geojson" name="format" type="radio" autocomplete="off" checked>GeoJSON</input>
+                      </label>
+
+                      <label class="btn btn-secondary btn-sm">
+                        <input id="format-csv" name="format" type="radio" autocomplete="off">CSV</input>
+                      </label>
+                    </div>
+
+                    <ul class="nav nav-tabs card-header-tabs float-xs-left">
+                      <li class="nav-item">
+                      <a href="#" class="nav-link active">Paste</a>
+                      </li>
+                      <li class="nav-item">
+                      <a href="#" class="nav-link">URL</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="card-block">
+                    <textarea class="form-control" id="new-modal__contents" rows="10">
 {
   "type": "FeatureCollection",
   "features": []
 }</textarea>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
