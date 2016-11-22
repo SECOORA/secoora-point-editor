@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
 
-  <body>
+  <body lang="en">
     <div class="central">
       <div id="mapid"></div>
       <div class="editor">
@@ -91,7 +91,7 @@
             <form>
               <div class="form-group">
                 <label for="new-modal__name" class="col-form-label">Name</label>
-                <input type="text" class="form-control" id="new-modal__name" placeholder="Layer Name" />
+                <input type="text" class="form-control" id="new-modal__name" placeholder="Layer Name" data-edited="false" />
               </div>
               <label class="">Import <span class="tag tag-info">Optional</span></label>
 
@@ -100,8 +100,8 @@
                   <div class="card-header">
 
                     <div class="btn-group float-xs-right" data-toggle="buttons">
-                      <label class="btn btn-secondary btn-sm active">
-                        <input id="format-geojson" name="format" type="radio" autocomplete="off" checked>GeoJSON</input>
+                      <label class="btn btn-secondary btn-sm">
+                        <input id="format-geojson" name="format" type="radio" autocomplete="off">GeoJSON</input>
                       </label>
 
                       <label class="btn btn-secondary btn-sm">
@@ -111,24 +111,32 @@
 
                     <ul class="nav nav-tabs card-header-tabs float-xs-left">
                       <li class="nav-item">
-                        <a href="#" class="nav-link active">Paste</a>
+                        <a href="#tab-paste" class="nav-link active" role="tab" data-toggle="tab">Paste</a>
                       </li>
                       <!--
                       <li class="nav-item">
-                        <a href="#" class="nav-link">URL</a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="#" class="nav-link">File</a>
+                        <a href="#" class="nav-link" role="tab" data-toggle="tab">URL</a>
                       </li>
                       -->
+                      <li class="nav-item">
+                        <a href="#tab-file" class="nav-link" role="tab" data-toggle="tab">File</a>
+                      </li>
                     </ul>
                   </div>
                   <div class="card-block">
-                    <textarea class="form-control" id="new-modal__contents" rows="10">
+                    <div class="tab-content">
+                      <div role="tabpanel" class="tab-pane active" id="tab-paste">
+                        <textarea class="form-control" id="new-modal__contents" rows="10">
 {
   "type": "FeatureCollection",
   "features": []
 }</textarea>
+                      </div>
+
+                      <div role="tabpanel" class="tab-pane" id="tab-file">
+                        <input type="file" id="new-modal__file" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

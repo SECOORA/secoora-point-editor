@@ -488,13 +488,12 @@ $('.layerbar__user__add').click(function() {
 //   data: ...
 // }
 function tryParse(val) {
-    var contents = $('#new-modal__contents').val(),
-      err = null;
+    var err = null;
 
     // first, try parsing it as JSON as that's more strict.
 
     try {
-      var gjo = JSON.parse(contents);
+      var gjo = JSON.parse(val);
 
       return {
         type: 'geojson',
@@ -503,7 +502,7 @@ function tryParse(val) {
 
     } catch (e) {
       // should we bother parsing with CSV?
-      if (contents.trim().startsWith("{")) {
+      if (val.trim().startsWith("{")) {
         return {
           type: 'geojson',
           error: e,
@@ -512,7 +511,7 @@ function tryParse(val) {
       }
     }
 
-    var csvParsed = Papa.parse(contents, {
+    var csvParsed = Papa.parse(val, {
       header: true,
       dynamicTyping: true
     });
@@ -553,27 +552,119 @@ function parseHint() {
   var val = $('#new-modal__contents').val(),
     parsedData = tryParse(val);
 
-  console.debug("parseHint", parsedData.type);
-  // if we know for sure, change buttons
+  setHint(parsedData.type);
+}
+
+// set the csv/geojson hint label
+// can pass null to clear it
+function setHint(type) {
   $('#new-modal .btn-group label').removeClass('active btn-success');
-  $('#format-' + parsedData.type).parent().addClass('active btn-success');
+  if (type !== null) {
+    $('#format-' + type).parent().addClass('active btn-success');
+  }
 }
 
 $('#new-modal__contents').on('change keyup paste', _.debounce(parseHint, 500));
+$('#new-modal__name').one('keyup paste', function() {
+  $(this).data('edited', 'true');
+});
+
+$('#new-modal__file').on('change', function() {
+  var file = $(this).get(0).files[0],
+    name = $('#new-modal__name').val();
+
+  // set hint if we can figure it out
+  if (file.name.toLowerCase().endsWith(".csv")) {
+    setHint('csv');
+  } else if (file.name.toLowerCase().endsWith('json')) {
+    setHint('geojson');
+  } else {
+    setHint(null);
+  }
+  
+  // set name if never been set
+  if ($('#new-modal__name').data('edited') !== 'true') {
+    var dotIndex = file.name.lastIndexOf('.');
+
+    if (dotIndex != -1) {
+      var newName = file.name.slice(0, dotIndex),
+        finalName = findAvailableLayerName(newName);
+
+      $('#new-modal__name').val(finalName);
+    }
+  }
+});
 
 $('.new-modal__import').click(function() {
 
   // kill any previous dangers/alerts
-  $('#new-modal').find('form-control-feedback').remove();
+  $('#new-modal').find('.form-control-feedback').remove();
   $('#new-modal').find('.has-danger').removeClass('has-danger');
   $('#new-modal').find('.form-control-danger').removeClass('form-control-danger');
 
-  var invalid = false,
-    contents = $('#new-modal__contents').val(),
-    name = $('#new-modal__name').val(),
-    parsedData = null,
-    layerData = null;
+  var contents = $('#new-modal__contents').val(),
+    file = $('#new-modal__file').get(0).files[0],
+    parsedData = null;
   
+  // if the contents pane visible, parse and immediatly call doImport
+  if ($('#tab-paste').hasClass('active')) {
+    if (contents.trim().length == 0) {
+      contents = {};
+    }
+
+    parsedData = tryParse(contents);
+    doImport(parsedData);
+  } else if ($('#tab-file').hasClass('active')) {
+
+    if (file === undefined) {
+
+      $('#new-modal__file').parent().addClass('has-danger')
+        .append('<div class="form-control-feedback">File is required</div>');
+
+      return;
+    }
+
+    if (file.name.toLowerCase().endsWith(".csv")) {
+      Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        complete: function(pd, oldF) {
+          doImport({
+           type: 'csv',
+           data: pd
+          }); 
+        }
+      });
+      
+    } else if (file.name.toLowerCase().endsWith('json')) {
+
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        parsedData = tryParse(event.target.result);
+        if (parsedData.type == 'geojson') {
+          doImport(parsedData);
+        } else {
+          $('#new-modal__file').parent().addClass('has-danger')
+            .append('<div class="form-control-feedback">Expected geojson format</div>');
+
+          return;
+        }
+      };
+
+      reader.readAsText(file);
+    } else {
+      $('#new-modal__file').parent().addClass('has-danger')
+        .append('<div class="form-control-feedback">File must end in json or .csv!</div>');
+
+    }
+  }
+});
+
+function doImport(parsedData) {
+  var invalid = false,
+    name = $('#new-modal__name').val(),
+    layerData = null;
+
   // if user didn't enter a name, it's an error
   if (!name) {
     $('#new-modal__name').parent().addClass('has-danger')
@@ -583,18 +674,12 @@ $('.new-modal__import').click(function() {
     invalid = true;
   }  
 
-  // do we have anything to even parse?
-  if (contents.trim().length > 0) {
+  if (parsedData.hasOwnProperty('error')) {
+    $('#new-modal__contents').parent().addClass('has-danger')
+      .append('<div class="form-control-feedback">' + 'Could not parse: ' + parsedData.error + '</div>');
 
-    parsedData = tryParse(contents);
-
-    if (parsedData.hasOwnProperty('error')) {
-      $('#new-modal__contents').parent().addClass('has-danger')
-        .append('<div class="form-control-feedback">' + 'Could not parse: ' + parsedData.error + '</div>');
-
-      $('#new-modal__contents').addClass('form-control-danger');
-      invalid = true;
-    }
+    $('#new-modal__contents').addClass('form-control-danger');
+    invalid = true;
   }
 
   if (invalid) return;
@@ -645,7 +730,7 @@ $('.new-modal__import').click(function() {
 
   closeEditorPane();
   $('#new-modal').modal('hide');
-});
+}
 
 function closeEditorPane() {
   // shrink editor pane
@@ -668,20 +753,33 @@ function closeEditorPane() {
 
 $('.editor .close').click(closeEditorPane);
 
-$('#new-modal').on('show.bs.modal', function(e) {
+function findAvailableLayerName(prefix) {
   var curNames = _.map(window.userLayers, 'name'),
     name = '';
-  for (var i = 1; i < 500; i++) {
-    name = "Unnamed Layer " + i;
+
+  // start with prefix itself
+  if (curNames.indexOf(prefix) == -1) {
+    return prefix;
+  }
+
+  for (var i = 2; i < 500; i++) {
+    name = prefix + " " + i;
     if (curNames.indexOf(name) == -1)
       break;
   }
 
+  return name;
+}
+
+$('#new-modal').on('show.bs.modal', function(e) {
+  var name = findAvailableLayerName("Unnamed Layer");
   if (!name) {
     throw "500 names?!?";
   }
 
   $('#new-modal__name').val(name);
+
+  setHint(null);
 });
 
 $('#new-modal').on('shown.bs.modal', function(e) {
