@@ -12,12 +12,13 @@ var colorScale = d3.scaleOrdinal(d3.schemeDark2),
 
 // default layers
 var defaultLayers = [
-  {name: 'bathygeon', url: "se_bathy.geojson", visible: true},
-  {name: 'hfradar', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/hfradar/hfradar.geojson", visible: true},
-  {name: 'gliders_from_georefd', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
-  {name: 'georef_glider_triangles', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
-  {name: 'gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
-  {name: 'stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/stations.geojson", visible: true}
+  {name: 'Bathymetry', url: "se_bathy.geojson", visible: true},
+  {name: 'HF Radar', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/hfradar/hfradar.geojson", visible: true},
+  {name: 'Glider Tracks', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
+  {name: 'Glider Tracks (triangle)', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
+  //{name: 'Gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
+  {name: 'Regional Stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/all_regional_stations.geojson", visible: true}
+  {name: 'SECOORA Funded', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/stations.geojson", visible: false},
 ]
 
 // leaflet
