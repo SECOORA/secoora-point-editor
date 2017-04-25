@@ -17,8 +17,8 @@ var defaultLayers = [
   {name: 'Glider Tracks', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
   {name: 'Glider Tracks (triangle)', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
   //{name: 'Gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
-  {name: 'Regional Stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/all_regional_stations.geojson", visible: true},
-  {name: 'SECOORA Funded', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/stations.geojson", visible: false}
+  {name: 'Regional Stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/regional/stations.geojson", visible: true},
+  {name: 'SECOORA Funded', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/assets/stations.geojson", visible: false}
 ]
 
 // leaflet
