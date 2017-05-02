@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+      {
+          "type": "Feature",
+          "id": "Sample Mooring",
+          "geometry": {
+              "type": "Point",
+              "coordinates": [
+                  -76.92,
+                  32.24
+              ]
+          },
+          "properties": {
+              "id": 1,
+              "name": "Sample Mooring"
+          }
+      }
+  ]
+}

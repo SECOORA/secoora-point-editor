@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="b.css">
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav id="TOC">
+<ul>
+<li><a href="#secoora-gap-analysis-tool">SECOORA Gap Analysis Tool</a><ul>
+<li><a href="#default-layers">Default Layers</a></li>
+<li><a href="#adding-a-user-layer">Adding a User Layer</a></li>
+<li><a href="#managing-user-layers">Managing User layers</a></li>
+<li><a href="#exporting-and-sharing-user-layers">Exporting and Sharing User Layers</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="secoora-gap-analysis-tool">SECOORA Gap Analysis Tool</h1>
+<figure>
+<img src="img/header.png" alt="Map of Region" /><figcaption>Map of Region</figcaption>
+</figure>
+<p>A web-based tool to aid researches in the gap analysis and planning for observing assets in the South Atlantic (US) and Gulf of Mexico region.</p>
+<ul>
+<li><a href="https://secoora.github.io/secoora-point-editor/">Website</a></li>
+<li><a href="https://secoora.github.io/secoora-point-editor/docs">Documentation</a></li>
+<li><a href="https://github.com/SECOORA/secoora-point-editor">Code</a></li>
+</ul>
+<p>Need help? Have Questions? Please email <a href="mailto:dmac@secoora.org">dmac@secoora.org</a>.</p>
+<h2 id="default-layers">Default Layers</h2>
+<p>By default there are six layers presented by default in the tool.</p>
+<ul>
+<li><p><strong>Bathymetry</strong></p>
+<p>This layer is pulled from <a href="https://github.com/SECOORA/static_assets/blob/master/bathy/bathy.geojson">here</a></p></li>
+<li><p><strong>HF Radar</strong></p>
+<p>The locations and coverage of HFRadar stations in the region. This layer is generated from <a href="https://github.com/SECOORA/static_assets/blob/master/hfradar/convert.py">this code</a> and <a href="https://docs.google.com/spreadsheets/d/11hWfIr4lrKP-RviEwSio6dZgnm0oUFUII9WChPDzeAw/edit#gid=62536835">this spreadsheet</a></p></li>
+<li><p><strong>Glider Tracks</strong></p>
+<p>Long-range glider tracks for the region</p></li>
+<li><p><strong>Glider Tracks (triangle)</strong></p>
+<p>Glider tracks that are focused on single areas of interest</p></li>
+<li><p><strong>Regional Stations</strong></p>
+<p>Regional observing platforms in the region. This excludes tide gauges and USGS stream flow stations as this tool was developed with off-short monitoring in mind. This layer is generated from <a href="https://github.com/SECOORA/static_assets/blob/master/stations/regional/get.py">this code</a>.</p></li>
+<li><p><strong>SECOORA Funded</strong></p>
+<p>Observing assets that SECOORA funds in the region. Some of these stations are also in the “Regional Stations” layer. This layer is generated from <a href="https://github.com/SECOORA/static_assets/blob/master/stations/assets/get.py">this code</a> and <a href="https://docs.google.com/spreadsheets/d/1ECXoa43uq9Gr8REZF-7EGlxNa1mkP7-4YturX0nFK7s/edit">this spreadsheet</a>.</p></li>
+</ul>
+<h2 id="adding-a-user-layer">Adding a User Layer</h2>
+<h4 id="supported-formats">Supported Formats</h4>
+<p>Users can upload data into the tool to add their own layers. These layers can then be exported and sent to other collaborators for viewing and further analysis.</p>
+<ul>
+<li><p>CSV</p>
+<p>There must be a column named “lat” or “latitude” and a column named “lon” or “longitude” in the uploaded CSV file.</p></li>
+<li><p><a href="http://geojson.org/">GeoJSON</a> FeatureCollection</p>
+<p>This is the format exported by the tool for sharing. See <a href="#exporting-and-sharing-user-layers">Exporting and Sharing User Layers</a>.</p></li>
+</ul>
+<h4 id="tutorial">Tutorial</h4>
+<ol type="1">
+<li><p>Click the “New Layer” button</p>
+<figure>
+<img src="img/add_01.png" />
+</figure></li>
+<li><p>Name your layer</p>
+<figure>
+<img src="img/add_02.png" />
+</figure>
+<p><strong>At this point you can click “Save to Map” if you don’t have existing data to upload</strong></p></li>
+<li><p>Add existing data to your layer <strong>Optional</strong></p>
+<p><a href="sample.csv">Example CSV</a> / <a href="sample.geojson">Example GeoJSON</a></p>
+<ul>
+<li><p>Enter existing GeoJSON or CSV data into the text box and click “Save to Map”.</p>
+<figure>
+<img src="img/add_03.png" />
+</figure></li>
+<li><p>Upload a CSV or GeoJSON file and click “Save to Map”</p>
+<figure>
+<img src="img/add_04.png" />
+</figure></li>
+</ul></li>
+<li><p>Your data should appear as a new layer on the map</p>
+<figure>
+<img src="img/add_05.png" />
+</figure></li>
+</ol>
+<h2 id="managing-user-layers">Managing User layers</h2>
+<p>Once you have a User Layer you can edit its properties.</p>
+<h4 id="tutorial-1">Tutorial</h4>
+<ol type="1">
+<li><p>Click on the title of the layer to bring up the editing panel.</p>
+<figure>
+<img src="img/manage_01.png" alt="Managing a User Layer" /><figcaption>Managing a User Layer</figcaption>
+</figure></li>
+<li><p>You can add and remove rows as needed from any User Layer</p>
+<figure>
+<img src="img/manage_02.png" alt="Adding data rows" /><figcaption>Adding data rows</figcaption>
+</figure></li>
+</ol>
+<h2 id="exporting-and-sharing-user-layers">Exporting and Sharing User Layers</h2>
+<p>Exporting a User Layer allows for the sharing of data between collaborators.</p>
+<p>Click on the “Export” button to bring up a dialog. Layers are always exported as GeoJSON. You can copy and paste the contents of the text box or click the “Download” button to download the GeoJSON to your computer. Exported layers can be imported by following the <a href="#adding-a-user-layer">Adding a User Layer</a> instructions.</p>
+<figure>
+<img src="img/manage_03.png" alt="Exporting a User Layer" /><figcaption>Exporting a User Layer</figcaption>
+</figure>
+</body>
+</html>
