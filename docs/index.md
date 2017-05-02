@@ -42,7 +42,6 @@ By default there are six layers presented by default in the tool.
 
 ## Adding a User Layer
 
-
 #### Supported Formats
 
 Users can upload data into the tool to add their own layers. These layers can then be exported and sent to other collaborators for viewing and further analysis.
@@ -57,6 +56,8 @@ Users can upload data into the tool to add their own layers. These layers can th
 
 
 #### Tutorial
+
+**Important Note:** User Layers are stored in web-browser local storage. You can re-visit the tool over and over using the same web browser and retain your User Layers. Be aware that if you clear your browser cookies/cache then your User Layers may go away! To persist important User Layers for a long period of time please use the [export functionality](#exporting-and-sharing-user-layers).
 
 1.  Click the "New Layer" button
 
