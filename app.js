@@ -7,7 +7,11 @@ localforage.config({
 
 // @TODO: default layers get loaded/stored in localforage if no key already in localforage
 
-var colorScale = d3.scaleOrdinal(d3.schemeDark2),
+var cScale = d3.schemeDark2;
+cScale[0] = "darkgray";
+cScale[2] = "midnightblue";
+cScale[3] = "darkviolet";
+var colorScale = d3.scaleOrdinal(cScale),
   userColorScale = d3.scaleOrdinal(d3.schemeSet1);
 
 // default layers
