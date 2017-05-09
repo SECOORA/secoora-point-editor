@@ -48,6 +48,9 @@ q.awaitAll(function(error, data) {
       color: colorScale(i),
       layer: L.geoJson(data[i], {
         pointToLayer: function(feature, latlng) {
+          if (feature.properties.status === "Decommissioned") {
+            return null;
+          }
           return L.circleMarker(latlng, {
             radius: 3,
             fillColor: colorScale(i),
