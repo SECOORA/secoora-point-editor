@@ -8,9 +8,15 @@ localforage.config({
 // @TODO: default layers get loaded/stored in localforage if no key already in localforage
 
 var cScale = d3.schemeDark2;
-cScale[0] = "darkgray";
-cScale[2] = "midnightblue";
-cScale[3] = "darkviolet";
+cScale[0] = "darkgray";      // Bathy
+cScale[1] = "#d95f02";       // HF Radar
+cScale[2] = "#66a61e";       // Regional Stations
+cScale[3] = "#e6ab02";       // SECOORA Funded
+cScale[4] = "midnightblue";  // 2016 Glider Tracks
+cScale[5] = "darkviolet";
+cScale[6] = "#a6761d";
+cScale[7] = "#666666";
+
 var colorScale = d3.scaleOrdinal(cScale),
   userColorScale = d3.scaleOrdinal(d3.schemeSet1);
 
@@ -18,11 +24,12 @@ var colorScale = d3.scaleOrdinal(cScale),
 var defaultLayers = [
   {name: 'Bathymetry', url: "se_bathy.geojson", visible: true},
   {name: 'HF Radar', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/hfradar/hfradar.geojson", visible: true},
-  {name: 'Glider Tracks', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
-  {name: 'Glider Tracks (triangle)', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
-  //{name: 'Gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
   {name: 'Regional Stations', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/regional/stations.geojson", visible: true},
-  {name: 'SECOORA Funded', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/assets/stations.geojson", visible: false}
+  {name: 'SECOORA Funded', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/stations/assets/stations.geojson", visible: false},
+  {name: '2016 Glider Tracks', url: 'https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/tracks/gliders_2016/gliders_2016.geojson', visible: true},
+  //{name: 'Glider Tracks', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/gliders_from_georefd.geojson", visible: true},
+  //{name: 'Glider Tracks (triangle)', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/glider_tracks/georef_glider_triangles.geojson", visible: true},
+  //{name: 'Gliders', url: "https://raw.githubusercontent.com/SECOORA/static_assets/master/gliders/gliders.geojson", visible: true},
 ]
 
 // leaflet
