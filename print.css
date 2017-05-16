@@ -1,0 +1,20 @@
+@media print {
+  .github-banner {
+    display: none;
+  }
+  .central {
+    max-width: 100%;
+  }
+
+  .layerbar {
+    display: none;
+  }
+
+  .editor {
+    display: none;
+  }
+
+  .leaflet-control-zoom {
+    display: none;
+  } 
+}
